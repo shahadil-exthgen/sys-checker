@@ -10,9 +10,9 @@ from config import MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, SENDER_EMAIL, RECIPIENT_
 
 # ----------------- CONFIG -----------------
 # Thresholds
-CPU_THRESHOLD = 80.0  # %
-RAM_THRESHOLD = 80.0  # %
-DISK_THRESHOLD = 90.0  # %
+CPU_THRESHOLD = 10.0  # %
+RAM_THRESHOLD = 10.0  # %
+DISK_THRESHOLD = 10.0  # %
 
 # Log file
 LOG_FILE = "system_monitor.log"
