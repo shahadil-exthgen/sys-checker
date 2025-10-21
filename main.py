@@ -289,8 +289,19 @@ def main():
         # Create HTML email body
         html_body = create_html_email(alerts, system_info, metrics)
         
+        # Generate subject based on which resources are critical
+        critical_resources = []
+        if metrics['cpu'] > CPU_THRESHOLD:
+            critical_resources.append("CPU")
+        if metrics['ram'] > RAM_THRESHOLD:
+            critical_resources.append("RAM")
+        if metrics['disk'] > DISK_THRESHOLD:
+            critical_resources.append("DISK")
+        
+        subject = f"🚨 {' + '.join(critical_resources)} Alert"
+        
         # Send email
-        send_email("🚨 System Resource Alert!", text_body, html_body)
+        send_email(subject, text_body, html_body)
     else:
         print("✅ All metrics are within limits.")
 
