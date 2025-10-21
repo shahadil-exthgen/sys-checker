@@ -39,6 +39,24 @@ def get_public_ip():
     except Exception as e:
         return f"Error fetching public IP: {e}"
 
+def get_processor_info():
+    """Get processor information from /proc/cpuinfo"""
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            for line in f:
+                if 'model name' in line:
+                    return line.split(':')[1].strip()
+    except:
+        pass
+    
+    # Fallback to platform processor
+    processor = platform.processor()
+    if processor:
+        return processor
+    
+    # Last resort - return machine type
+    return platform.machine()
+
 def get_system_info():
     uname = platform.uname()
     hostname = socket.gethostname()
@@ -46,6 +64,7 @@ def get_system_info():
     uptime_string = str(timedelta(seconds=int(uptime_seconds)))
     
     public_ip = get_public_ip()
+    processor = get_processor_info()
     
     sys_info = {
         'hostname': hostname,
@@ -54,7 +73,7 @@ def get_system_info():
         'release': uname.release,
         'version': uname.version,
         'machine': uname.machine,
-        'processor': uname.processor,
+        'processor': processor,
         'uptime': uptime_string,
         'public_ip': public_ip
     }
