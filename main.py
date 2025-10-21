@@ -231,15 +231,18 @@ def send_email(subject, text_body, html_body=None):
 def check_metrics():
     alerts = []
     
-    cpu_percent = psutil.cpu_percent(interval=1)
+    cpu_percent = round(psutil.cpu_percent(interval=1), 1)
+    print(f"📊 CPU: {cpu_percent}% (Threshold: {CPU_THRESHOLD}%)")
     if cpu_percent > CPU_THRESHOLD:
         alerts.append(f"High CPU usage detected: {cpu_percent}%")
     
-    ram_percent = psutil.virtual_memory().percent
+    ram_percent = round(psutil.virtual_memory().percent, 1)
+    print(f"📊 RAM: {ram_percent}% (Threshold: {RAM_THRESHOLD}%)")
     if ram_percent > RAM_THRESHOLD:
         alerts.append(f"High RAM usage detected: {ram_percent}%")
     
-    disk_percent = psutil.disk_usage('/').percent
+    disk_percent = round(psutil.disk_usage('/').percent, 1)
+    print(f"📊 Disk: {disk_percent}% (Threshold: {DISK_THRESHOLD}%)")
     if disk_percent > DISK_THRESHOLD:
         alerts.append(f"High Disk usage detected: {disk_percent}%")
     
