@@ -6,18 +6,13 @@ import os
 from datetime import datetime, timedelta
 from mailjet_rest import Client
 import requests
+from config import MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, SENDER_EMAIL, RECIPIENT_EMAIL
 
 # ----------------- CONFIG -----------------
 # Thresholds
-CPU_THRESHOLD = 10.0  # %
-RAM_THRESHOLD = 10.0  # %
-DISK_THRESHOLD = 10.0  # %
-
-# Mailjet credentials
-MAILJET_API_KEY = os.getenv('MJ_APIKEY_PUBLIC')
-MAILJET_API_SECRET = os.getenv('MJ_APIKEY_PRIVATE')
-FROM_EMAIL = os.getenv('SENDER_EMAIL')
-TO_EMAIL = os.getenv('RECIPIENT_EMAIL')
+CPU_THRESHOLD = 80.0  # %
+RAM_THRESHOLD = 80.0  # %
+DISK_THRESHOLD = 90.0  # %
 
 # Log file
 LOG_FILE = "system_monitor.log"
@@ -29,6 +24,15 @@ logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+# Initialize Mailjet client
+mailjet = Client(
+    auth=(
+        MJ_APIKEY_PUBLIC,
+        MJ_APIKEY_PRIVATE,
+    ),
+    version="v3.1",
 )
 
 def get_public_ip():
@@ -192,33 +196,43 @@ def create_html_email(alerts, system_info, metrics):
     
     return html
 
-def send_alert(subject, alerts, system_info, metrics):
-    mailjet = Client(auth=(MAILJET_API_KEY, MAILJET_API_SECRET), version='v3.1')
-    
-    html_content = create_html_email(alerts, system_info, metrics)
-    
-    # Plain text version for fallback
-    text_content = "\n".join(alerts) + "\n\nSystem Info:\n"
-    for key, value in system_info.items():
-        text_content += f"{key.replace('_', ' ').title()}: {value}\n"
-    
+def send_email(subject, text_body, html_body=None):
+    """Send email using Mailjet"""
+    if not SENDER_EMAIL or not RECIPIENT_EMAIL:
+        print("⚠️ SENDER_EMAIL or RECIPIENT_EMAIL not configured in environment.")
+        return
+
+    if html_body is None:
+        html_body = f"<pre>{text_body}</pre>"
+
     data = {
-        'Messages': [
+        "Messages": [
             {
-                "From": {"Email": FROM_EMAIL, "Name": "System Monitor"},
-                "To": [{"Email": TO_EMAIL}],
+                "From": {"Email": SENDER_EMAIL, "Name": "System Monitor"},
+                "To": [{"Email": RECIPIENT_EMAIL, "Name": "Admin"}],
                 "Subject": subject,
-                "TextPart": text_content,
-                "HTMLPart": html_content
+                "TextPart": text_body,
+                "HTMLPart": html_body,
             }
         ]
     }
-    
-    result = mailjet.send.create(data=data)
-    if result.status_code == 200:
-        logging.info("Alert email sent successfully.")
-    else:
-        logging.error(f"Failed to send email. Status code: {result.status_code}")
+
+    try:
+        response = mailjet.send.create(data=data)
+        print(f"📧 Email status: {response.status_code}")
+        try:
+            response_json = response.json()
+            if response.status_code != 200:
+                print(f"❌ Email send error: {response_json}")
+                logging.error(f"Failed to send email: {response_json}")
+            else:
+                logging.info("Alert email sent successfully.")
+        except Exception as json_error:
+            print(f"❌ Failed to parse Mailjet response: {json_error}")
+            logging.error(f"Failed to parse Mailjet response: {json_error}")
+    except Exception as e:
+        print(f"❌ Exception while sending email: {e}")
+        logging.error(f"Exception while sending email: {e}")
 
 def check_metrics():
     alerts = []
@@ -248,16 +262,21 @@ def main():
     if alerts:
         system_info = get_system_info()
         
-        # Log plain text version
-        log_message = "\n".join(alerts) + "\n\nSystem Info:\n"
+        # Create plain text version for TextPart
+        text_body = "\n".join(alerts) + "\n\nSystem Info:\n"
         for key, value in system_info.items():
-            log_message += f"{key.replace('_', ' ').title()}: {value}\n"
-        logging.warning(log_message)
+            text_body += f"{key.replace('_', ' ').title()}: {value}\n"
         
-        # Send pretty HTML email
-        send_alert("System Resource Alert!", alerts, system_info, metrics)
+        # Log the alert
+        logging.warning(text_body)
+        
+        # Create HTML email body
+        html_body = create_html_email(alerts, system_info, metrics)
+        
+        # Send email
+        send_email("🚨 System Resource Alert!", text_body, html_body)
     else:
-        print("All metrics are within limits.")
+        print("✅ All metrics are within limits.")
 
 if __name__ == "__main__":
     main()
