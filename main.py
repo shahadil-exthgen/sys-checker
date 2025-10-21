@@ -9,13 +9,7 @@ import requests
 from config import MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, SENDER_EMAIL, RECIPIENT_EMAIL
 
 # ----------------- CONFIG -----------------
-# Thresholds
-CPU_THRESHOLD = 10.0  # %
-RAM_THRESHOLD = 10.0  # %
-DISK_THRESHOLD = 10.0  # %
-
-# Log file
-LOG_FILE = "system_monitor.log"
+from config import CPU_THRESHOLD, RAM_THRESHOLD, DISK_THRESHOLD, LOG_FILE
 
 # ----------------------------------------
 
