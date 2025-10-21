@@ -135,7 +135,7 @@ def create_html_email(alerts, system_info, metrics):
                         <!-- Header -->
                         <tr>
                             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🚨 System Alert</h1>
+                                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">System Alert</h1>
                                 <p style="margin: 10px 0 0 0; color: #e6e6ff; font-size: 14px;">{datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
                             </td>
                         </tr>
@@ -298,7 +298,7 @@ def main():
         if metrics['disk'] > DISK_THRESHOLD:
             critical_resources.append("DISK")
         
-        subject = f"🚨 {' + '.join(critical_resources)} Alert"
+        subject = f"{' + '.join(critical_resources)} Alert"
         
         # Send email
         send_email(subject, text_body, html_body)
